@@ -1,14 +1,31 @@
 import requests
-from bs4 import BeautifulSoup 
+from bs4 import BeautifulSoup
+import re
 
-import urllib.request
+soup = BeautifulSoup(open("html_page.html"), "html.parser")
 
-url = urllib.request.urlopen('https://www.oddsportal.com/soccer/england/premier-league-2019-2020/arsenal-watford-2JDks1o7/')
+betting_exchanges_table = soup.find_all("table", class_="table-main detail-odds sortable")[1]
 
-print(url.getcode())
+betting_exchanges_table.find_all("td") # 1, 2, 4, 5
+back_odds = betting_exchanges_table("td")[2]
+print(back_odds.div.contents)
 
-html = url.read()
+#regex for center or odds in class
 
-soup = BeautifulSoup(html)
+re.compile("(center|odds)")
 
-print(soup.find_all(text='BETTING'))
+betting_exchanges_table("td", class_=re.compile("(center|odds)"))
+
+for cell in betting_exchanges_table("td", class_=re.compile("(center|odds)")):
+    # print(cell)
+    if 'colspan' in cell.attrs:
+        break
+    if cell.string == None:
+        print(cell.div.contents)
+        print('*************', end='\n\n')
+        continue
+    print(cell.string)
+
+    print('*************', end='\n\n')
+
+
