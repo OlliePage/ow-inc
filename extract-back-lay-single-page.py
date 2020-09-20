@@ -3,12 +3,12 @@ from bs4 import BeautifulSoup
 import re
 from typing import Dict, List, NewType
 import pandas as pd
-from login_session import fetch_html
+from oddsportal import fetch_odds
 
 ResultSet = NewType('ResultSet', List)
 NavigableString = NewType('NavigableString', str)
 
-html = fetch_html(url='https://www.oddsportal.com/soccer/england/premier-league-2019-2020/arsenal-watford-2JDks1o7/#cs;2;1',
+html = fetch_odds(url='https://www.oddsportal.com/soccer/england/premier-league-2019-2020/arsenal-watford-2JDks1o7/#cs;2;1',
                   show_window=False,
                   save=True)
 
