@@ -27,3 +27,4 @@ for cell in betting_exchanges_table("td", class_=re.compile("(center|odds)")):
 odds_store_df = pd.DataFrame(data=odds_store, index=[soup.title.string])
 
 
+
