@@ -59,3 +59,10 @@ def get_odds_by_exchange() -> Dict[str, Dict[str, str]]:
 
 
 odds_store = get_odds_by_exchange()
+
+reference_table = pd.DataFrame.from_dict(odds_store).T
+reference_table.index.name = 'Exchanges'
+reference_table['match_details'] = soup.title
+
+
+
