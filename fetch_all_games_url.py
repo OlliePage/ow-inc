@@ -12,4 +12,8 @@ html = login_oddsportal(url='https://www.oddsportal.com/soccer/england/premier-l
 
 soup = BeautifulSoup(html, "html.parser")
 
-pprint.pprint(soup.find_all(href=re.compile('/soccer/england/premier-league')))
+# fetch all the urls from the given page, then filter down to just the urls that pertain to football matches
+raw_hrefs = soup.find_all(href=re.compile('/soccer/england/premier-league/[a-z]'))
+raw_url = [ref['href'] for ref in raw_hrefs]
+soccer_href_matches_url = [f'https://www.oddsportal.com/{s}' for s in raw_url if not any(xs in s for xs in ['results', 'standings', 'outrights'])]
+
