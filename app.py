@@ -4,10 +4,9 @@ import oddsportal
 from bs4 import BeautifulSoup
 import pandas as pd
 
-for starting_year in range(2015, 2016):
+for starting_year in range(2015, 2020):
     print(">> starting year:" + str(starting_year))
-    # match_urls = oddsportal.return_soccer_url(starting_year)
-    match_urls = ['https://www.oddsportal.com//soccer/england/premier-league-2015-2016/arsenal-aston-villa-ALt6zNIc/#cs;2;1']
+    match_urls = oddsportal.return_soccer_url(starting_year, show_window=False)
 
     for match_url in match_urls:
         print("> match url: " + match_url)
@@ -23,7 +22,7 @@ for starting_year in range(2015, 2016):
 
         if 'reference_table' in locals():   # check if the variable exists in the local scope
             additional_observation = pd.DataFrame.from_dict(odds_store).T
-            additional_observation['match_details'] = soup.title
+            additional_observation['match_details'] = soup.title.string
 
             reference_table = pd.concat([reference_table, additional_observation])
 
