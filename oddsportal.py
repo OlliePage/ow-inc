@@ -130,6 +130,8 @@ def get_odds_by_exchange(soup) -> Dict[str, Dict[str, str]]:
     match_title = [parent.title.string for parent in navigable_string.parents if parent.title is not None][0]
     print(f'> match_title: {match_title}')
 
+    betting_exchanges_table = soup.find_all("table", class_="table-main detail-odds sortable")[1]
+
     odd_class = betting_exchanges_table.find("tbody").find_all("tr", class_="odd")
 
     odds_store: Dict[str, Dict[str, str]] = {} # {'exchange_name': {'Back': [odds], 'Lay': [odds]}}
