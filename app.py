@@ -1,4 +1,4 @@
-# todo need to handle multiple pages of results (8 pages)
+# todo the match_urls is looping on the same page1 rather than going to page2 onwards. investigate
 
 import oddsportal
 from bs4 import BeautifulSoup

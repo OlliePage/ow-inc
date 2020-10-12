@@ -5,10 +5,11 @@ from bs4 import BeautifulSoup
 import re
 from datetime import date
 import numpy as np
+from pandas.core.common import flatten
+
 
 ResultSet = NewType('ResultSet', List)
 NavigableString = NewType('NavigableString', str)
-
 
 def login_oddsportal(url, show_window):
     """
@@ -27,42 +28,73 @@ def login_oddsportal(url, show_window):
     driver.click(tag='input', classname='int-text', id='login-password1')
     driver.type('8simpsons8')
     driver.click('Login', tag='button', classname="inline-btn-2", number=3)
+    driver.go_to(url)
     return driver
 
-
-def return_soccer_url(starting_year: int, show_window: bool) -> List:
+def is_valid_results_url(url):
     """
-    fetch all the urls from the results page, and filter the results to just the urls that pertain to football matches
+    Checks whether the given results page url contains football matches. e.g premier-league/results/#/page10/ may
+    contain results, whereas premier-league/results/#/page200/ will not
+    :param url: url of results page
+    :return: bool
+    """
+    driver = Browser(showWindow=False)
+    driver.go_to(url)
+    html = driver.get_page_source()
 
-    :return: (list)
+    # check if page contains multiple _class = "name table-participant"
+    soup = BeautifulSoup(html, "html.parser")
+    listed_matches = soup.find_all("td", class_="name table-participant")
+    return True if len(listed_matches) > 2 else False
+
+def return_results_page(starting_year: int) -> List:
+    """
+    fetch all the results pages
+
+    :return: (List) list of html pages, each element in list is a single soccor results page 
     """
     if starting_year == date.today().year:
         odds_portal_url = 'https://www.oddsportal.com/soccer/england/premier-league/results/'
     else:
         odds_portal_url = f'https://www.oddsportal.com/soccer/england/premier-league-{str(starting_year)}-{str(starting_year+1)}/results/'
 
-    driver = login_oddsportal(url=odds_portal_url,
-                            show_window=show_window)
+    odds_portal_url_pagenation = [odds_portal_url+ f"/#/page{i}/" for i in range(1,9) if is_valid_results_url(odds_portal_url+ f"/#/page{i}/")]
 
-    driver.go_to(odds_portal_url)
-    html = driver.get_page_source()
-    # driver.close_current_tab()
+    html_multi_page = []
+    for odds_url in odds_portal_url_pagenation:
+        driver = login_oddsportal(url=odds_url, show_window=False)
+        html_single_page = driver.get_page_source()
+        html_multi_page.append(html_single_page)
 
-    soup = BeautifulSoup(html, "html.parser")
+    return html_multi_page
 
-    # fetch all the urls from the given page, then filter down to just the urls that pertain to football matches
+def return_soccer_url(starting_year: int, show_window: bool) -> List:
+    """
+    filter the results html to just the urls that pertain to football matches, returning their hrefs
 
-    if starting_year == date.today().year:
-        regex_pattern = '/soccer/england/premier-league/[a-z]'
-    else:
-        regex_pattern = f"/soccer/england/premier-league-{str(starting_year)}-{str(starting_year+1)}/[a-z]"
+    :return: (list)
+    """
 
-    raw_hrefs = soup.find_all(href=re.compile(regex_pattern))
-    raw_url = [ref['href'] for ref in raw_hrefs]
-    soccer_href_matches_url = [f'https://www.oddsportal.com/{s}#cs;2;1' for s in raw_url if
-                               not any(xs in s for xs in ['results', 'standings', 'outrights'])]
-    return soccer_href_matches_url
+    html_store = return_results_page(starting_year)
 
+    soccer_href_matches_url_list = []
+    for html in html_store:
+        soup = BeautifulSoup(html, "html.parser")
+
+        if starting_year == date.today().year:
+            regex_pattern = '/soccer/england/premier-league/[a-z]'
+        else:
+            regex_pattern = f"/soccer/england/premier-league-{str(starting_year)}-{str(starting_year+1)}/[a-z]"
+
+        raw_hrefs = soup.find_all(href=re.compile(regex_pattern))
+        raw_url = [ref['href'] for ref in raw_hrefs]
+        soccer_href_matches_url = [f'https://www.oddsportal.com/{s}#cs;2;1' for s in raw_url if
+                                   not any(xs in s for xs in ['results', 'standings', 'outrights'])]
+        soccer_href_matches_url_list.append(soccer_href_matches_url)
+
+        soccer_href_matches_url_list = list(flatten(soccer_href_matches_url_list))
+
+    return soccer_href_matches_url_list
 
 def fetch_odds_html(url, show_window, save):
     """
@@ -85,7 +117,6 @@ def fetch_odds_html(url, show_window, save):
 
     return html
 
-
 def split_exchanges_html(soup) -> Dict:
 
 
@@ -106,7 +137,6 @@ def split_exchanges_html(soup) -> Dict:
     exchange_dict = {result_set[0].string: result_set for result_set in exchange_location}
     return exchange_dict
 
-
 # place the html for the matchbook row and the betfair row in separate elements in a list
 def get_odds_by_exchange(soup) -> Dict[str, Dict[str, str]]:
     """
@@ -120,7 +150,6 @@ def get_odds_by_exchange(soup) -> Dict[str, Dict[str, str]]:
 
     navigable_string = [k for k, _ in exchange_dict.items()][0]
     match_title = [parent.title.string for parent in navigable_string.parents if parent.title is not None][0]
-    print(f'> match_title: {match_title}')
 
     betting_exchanges_table = soup.find_all("table", class_="table-main detail-odds sortable")[1]
 
@@ -140,6 +169,4 @@ def get_odds_by_exchange(soup) -> Dict[str, Dict[str, str]]:
         odds_store[exchange_name]["Lay"] = lay_odds
 
     return odds_store
-
-
 
