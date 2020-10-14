@@ -6,7 +6,7 @@ import re
 from datetime import date
 import numpy as np
 import itertools
-
+from dateutil.parser import parse
 
 ResultSet = NewType('ResultSet', List)
 NavigableString = NewType('NavigableString', str)
@@ -173,4 +173,13 @@ def get_odds_by_exchange(soup) -> Dict[str, Dict[str, str]]:
         odds_store[exchange_name]["Lay"] = lay_odds
 
     return odds_store
+
+def get_match_date(soup):
+    """returns the date that the match was played"""
+    match_date_tag = soup.find("p", class_="date")
+    match_date_tag_contents = match_date_tag.contents[0].split(',')[1]
+    match_date_datetime = parse(match_date_tag_contents).date()
+    return match_date_datetime
+
+
 

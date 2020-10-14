@@ -23,12 +23,14 @@ for starting_year in range(2011, 2020):
         if 'reference_table' in locals():  # check if the variable exists in the local scope
             additional_observation = pd.DataFrame.from_dict(odds_store).T
             additional_observation['match_details'] = soup.title.string
+            additional_observation['match_date'] = oddsportal.get_match_date(soup)
 
             reference_table = pd.concat([reference_table, additional_observation])
 
         else:
             reference_table = pd.DataFrame.from_dict(odds_store).T
             reference_table['match_details'] = soup.title.string
+            reference_table['match_date'] = oddsportal.get_match_date(soup)
             reference_table.index.name = 'Exchanges'
 
     reference_table.to_csv(f'./premier-league-{str(starting_year)}.csv')
