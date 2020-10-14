@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import re
 from datetime import date
 import numpy as np
-from pandas.core.common import flatten
+import itertools
 
 
 ResultSet = NewType('ResultSet', List)
@@ -58,11 +58,16 @@ def return_results_page(starting_year: int) -> List:
     else:
         odds_portal_url = f'https://www.oddsportal.com/soccer/england/premier-league-{str(starting_year)}-{str(starting_year+1)}/results/'
 
-    odds_portal_url_pagenation = [odds_portal_url+ f"/#/page{i}/" for i in range(1,9) if is_valid_results_url(odds_portal_url+ f"/#/page{i}/")]
+    i = 1
+    odds_portal_url_pagenation = []
+    while is_valid_results_url(odds_portal_url+ f"/#/page/{i}/"):
+        odds_portal_url_pagenation.append(odds_portal_url + f"/#/page/{i}/")
+        i += 1
 
     html_multi_page = []
     for odds_url in odds_portal_url_pagenation:
         driver = login_oddsportal(url=odds_url, show_window=False)
+        driver.go_to(url=odds_url)
         html_single_page = driver.get_page_source()
         html_multi_page.append(html_single_page)
 
@@ -75,10 +80,10 @@ def return_soccer_url(starting_year: int, show_window: bool) -> List:
     :return: (list)
     """
 
-    html_store = return_results_page(starting_year)
+    html_multi_page = return_results_page(starting_year)
 
     soccer_href_matches_url_list = []
-    for html in html_store:
+    for html in html_multi_page:
         soup = BeautifulSoup(html, "html.parser")
 
         if starting_year == date.today().year:
@@ -92,9 +97,7 @@ def return_soccer_url(starting_year: int, show_window: bool) -> List:
                                    not any(xs in s for xs in ['results', 'standings', 'outrights'])]
         soccer_href_matches_url_list.append(soccer_href_matches_url)
 
-        soccer_href_matches_url_list = list(flatten(soccer_href_matches_url_list))
-
-    return soccer_href_matches_url_list
+    return list(itertools.chain(*soccer_href_matches_url_list))
 
 def fetch_odds_html(url, show_window, save):
     """
@@ -146,7 +149,8 @@ def get_odds_by_exchange(soup) -> Dict[str, Dict[str, str]]:
     :return: (dict) Booking Exchanges and their respective Back & Lay odds
     """
     exchange_dict = split_exchanges_html(soup)
-    assert(exchange_dict), 'exchange_dict is empty'
+    if not exchange_dict:
+        return None
 
     navigable_string = [k for k, _ in exchange_dict.items()][0]
     match_title = [parent.title.string for parent in navigable_string.parents if parent.title is not None][0]

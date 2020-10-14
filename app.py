@@ -1,10 +1,9 @@
-# todo the match_urls is looping on the same page1 rather than going to page2 onwards. investigate
 
 import oddsportal
 from bs4 import BeautifulSoup
 import pandas as pd
 
-for starting_year in range(2019, 2020):
+for starting_year in range(2011, 2020):
     print(">> starting year: " + str(starting_year))
     match_urls = oddsportal.return_soccer_url(starting_year, show_window=False)
 
@@ -31,3 +30,5 @@ for starting_year in range(2019, 2020):
             reference_table = pd.DataFrame.from_dict(odds_store).T
             reference_table['match_details'] = soup.title.string
             reference_table.index.name = 'Exchanges'
+
+    reference_table.to_csv(f'./premier-league-{str(starting_year)}.csv')
