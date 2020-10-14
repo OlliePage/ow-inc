@@ -6,16 +6,16 @@ import pandas as pd
 for starting_year in range(2011, 2020):
     print(">> starting year: " + str(starting_year))
     match_urls = oddsportal.return_soccer_url(starting_year, show_window=False)
-
-    for match_url in match_urls:
-        print("> match url: " + match_url)
+    number_of_matches = len(match_urls)
+    for i, match_url in enumerate(match_urls):
+        print(f"> {starting_year}:{i:02}/{number_of_matches:02}\n> match url: " + match_url)
         html = oddsportal.fetch_odds_html(url=match_url,  # cs;2;1 will have the 0:0 odds enabled
                                           show_window=False,
                                           save=False)
 
         soup = BeautifulSoup(html, "html.parser")
         odds_store = oddsportal.get_odds_by_exchange(soup) if oddsportal.get_odds_by_exchange(soup) else \
-            print("match does not contain required info")
+            print("> match does not contain required info. Skipping.")
 
         if not odds_store:
             continue
